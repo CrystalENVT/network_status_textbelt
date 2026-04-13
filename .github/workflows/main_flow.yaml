@@ -1,0 +1,76 @@
+name: Run PyTest, Build Dockerfile, & check for Docker vulnerability
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+ BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+  # pytest:
+  #   name: PyTest Framework - Python
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+  #     - name: Set up Python 3.14
+  #       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+  #       with:
+  #         python-version: 3.14
+
+  #     - name: Install dependencies for testing
+  #       run: |
+  #         python -m pip install --root-user-action ignore --upgrade pip
+  #         pip install --root-user-action ignore -r requirements.txt
+  #         pip install --root-user-action ignore -r test_requirements.txt
+
+  #     - name: Test with PyTest
+  #       run: pytest --html=tests/Report.html --self-contained-html
+
+  #     - name: PyTest Report Generation
+  #       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+  #       if: success() || failure()
+  #       with:
+  #         name: Pytest_Report           # Name of the folder
+  #         path: tests/Report.html           # Path to test results
+  docker_build:
+    # needs: pytest
+    name: Build, Test, & Publish Development Docker Image
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Build image from Dockerfile
+      run: docker build -t docker.io/crystalenvt/network_status_textbelt:${{ github.sha }} .
+
+    - name: Run Trivy vulnerability scanner against built image
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      with:
+        image-ref: 'docker.io/crystalenvt/network_status_textbelt:${{ github.sha }}'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@ba754150c9dbbaa912ae0ac3cfba43f84195cef2
+      with:
+        username: ${{ vars.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@c3b064c6d7c32446d6bc214ea075f1caad2de35a
+      with:
+        images: crystalenvt/network_status_textbelt
+
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@83bfd93ab480705a7b99a2ed02765137f5ab55ba
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: crystalenvt/network_status_textbelt:${{ env.BRANCH_NAME }},crystalenvt/movarr:${{ env.BRANCH_NAME }}-${{ github.sha }}

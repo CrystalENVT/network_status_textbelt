@@ -1,0 +1,44 @@
+name: Publish Docker image on GitHub Release
+on:
+  release:
+    types: [published]
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@ba754150c9dbbaa912ae0ac3cfba43f84195cef2
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags) for Docker
+        id: meta
+        uses: docker/metadata-action@c3b064c6d7c32446d6bc214ea075f1caad2de35a
+        with:
+          images: crystalenvt/movarr
+          tags: |
+            type=sha
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@83bfd93ab480705a7b99a2ed02765137f5ab55ba
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

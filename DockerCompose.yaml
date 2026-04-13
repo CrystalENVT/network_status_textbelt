@@ -1,0 +1,17 @@
+services:
+  movarr:
+    image: crystalenvt/network_status_textbelt:v1
+    container_name: network_status_textbelt
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      textbelt_api_token: ${textbelt_api_token}
+      textbelt_phone_number: ${textbelt_phone_number}
+      textbelt_organization_name: ${textbelt_organization_name}
+      network_monitor_target: ${network_monitor_target}
+      successful_timer: ${successful_timer}
+      error_timer: ${error_timer}
+    volumes:
+      - ${docker_mount_point}:/data
+networks: {}
