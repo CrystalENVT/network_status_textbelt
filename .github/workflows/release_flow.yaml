@@ -26,7 +26,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@c3b064c6d7c32446d6bc214ea075f1caad2de35a
         with:
-          images: crystalenvt/movarr
+          images: crystalenvt/network_status_textbelt
           tags: |
             type=sha
             type=semver,pattern=v{{version}}

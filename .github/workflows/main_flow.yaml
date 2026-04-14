@@ -73,4 +73,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: crystalenvt/network_status_textbelt:${{ env.BRANCH_NAME }},crystalenvt/movarr:${{ env.BRANCH_NAME }}-${{ github.sha }}
+        tags: crystalenvt/network_status_textbelt:${{ env.BRANCH_NAME }},crystalenvt/network_status_textbelt:${{ env.BRANCH_NAME }}-${{ github.sha }}
