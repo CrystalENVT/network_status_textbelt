@@ -1,5 +1,5 @@
 services:
-  movarr:
+  network_status_textbelt:
     image: crystalenvt/network_status_textbelt:v1
     container_name: network_status_textbelt
     restart: unless-stopped
